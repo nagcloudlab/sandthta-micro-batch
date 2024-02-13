@@ -1,0 +1,16 @@
+logging:
+  level:
+    root: INFO
+    # com.provectus: DEBUG
+    # reactor.netty.http.server.AccessLog: INFO
+    # org.springframework.security: DEBUG
+
+server.port: 8181
+
+kafka:
+  clusters:
+    - name: local-kafka-cluster
+      bootstrapServers: localhost:9092
+    
+
+dynamic.config.enabled: true

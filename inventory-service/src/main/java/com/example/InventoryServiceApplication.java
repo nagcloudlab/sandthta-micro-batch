@@ -20,6 +20,7 @@ class InventoryCheckResponse {
 
 @RestController
 class InventoryController {
+
 	@GetMapping("/inventory/{item}/check")
 	public InventoryCheckResponse checkInventory(@PathVariable String item) {
 		// ... check inventory
