@@ -1,0 +1,38 @@
+
+
+server:
+  port: 7001
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console  
+  jpa:  
+    hibernate:
+        ddl-auto: create
+    show-sql: true
+    properties:
+        hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format-sql: true
+
+inventory:
+  api: http://localhost:7002/inventory        
+
+---
+
+spring:
+  profiles:
+    active:
+    - prod
+
+
+inventory:
+  api: http://inventory-service:7002/inventory      
+

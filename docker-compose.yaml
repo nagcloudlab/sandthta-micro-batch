@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile    
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    ports:
+      - 7001:7001

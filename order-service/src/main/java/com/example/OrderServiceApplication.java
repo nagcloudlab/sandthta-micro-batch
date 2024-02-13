@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -81,19 +82,22 @@ interface OrdersRepository extends JpaRepository<Order, Integer> {
 }
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 class OrdersController {
 
 	private final OrdersRepository ordersRepository;
 	private final RestTemplate restTemplate = new RestTemplate();
 	private final KafkaTemplate<String, String> kafkaTemplate;
 
+	@Value("${inventory.api}")
+	private String inventoryApi;
+
 	@PostMapping("/orders")
 	public ResponseEntity<?> createOrder(@RequestBody NewOrderRequest newOrder) {
 		// check order items exist in inventory
 		String item = newOrder.getItems()[0];
-		String inventoryApi = "http://localhost:7002/inventory/" + item + "/check";
-		ResponseEntity<InventoryCheckResponse> inventoryCheckResponseEntity = restTemplate.getForEntity(inventoryApi,
+		ResponseEntity<InventoryCheckResponse> inventoryCheckResponseEntity = restTemplate.getForEntity(
+				inventoryApi + "/" + item + "/check",
 				InventoryCheckResponse.class);
 		InventoryCheckResponse inventoryCheckResponse = inventoryCheckResponseEntity.getBody();
 		if (inventoryCheckResponse != null && inventoryCheckResponse.isAvailable()) {
@@ -102,14 +106,15 @@ class OrdersController {
 			// ... save order
 			ordersRepository.save(order);
 
-			// paymentrequest message = customerId,amount
-			String messagePayload = newOrder.getCustomerId() + ",500";
+			// // paymentrequest message = customerId,amount
+			// String messagePayload = newOrder.getCustomerId() + ",500";
 
-			// ... send message to kafka topic
-			ProducerRecord<String, String> record = new ProducerRecord<>("payment_requests",
-					String.valueOf(order.getId()), messagePayload);
+			// // ... send message to kafka topic
+			// ProducerRecord<String, String> record = new
+			// ProducerRecord<>("payment_requests",
+			// String.valueOf(order.getId()), messagePayload);
 
-			kafkaTemplate.send(record);
+			// kafkaTemplate.send(record);
 
 			// ... return response
 			return ResponseEntity.ok(new NewOrderResponse(order.getId(), order.getStatus()));
@@ -142,29 +147,31 @@ class PaymentResponseMessageHandler {
 
 	private final OrdersRepository ordersRepository;
 
-	@SuppressWarnings("null")
-	@KafkaListener(topics = "payment_responses", groupId = "order-service")
-	public void handleMessage(ConsumerRecord<String, String> record) {
+	// @SuppressWarnings("null")
+	// @KafkaListener(topics = "payment_responses", groupId = "order-service")
+	// public void handleMessage(ConsumerRecord<String, String> record) {
 
-		String orderId = record.key() != null ? record.key() : "unknown";
-		String payload = record.value();
+	// String orderId = record.key() != null ? record.key() : "unknown";
+	// String payload = record.value();
 
-		System.out.println(orderId + " " + payload);
+	// System.out.println(orderId + " " + payload);
 
-		// ... update order status
-		if (payload.equals("APPROVED")) {
-			// ... update order status
-			Order order = ordersRepository.findById(Integer.parseInt(orderId)).orElseThrow();
-			order.setStatus(OrderStatus.APPROVED);
-			ordersRepository.save(order);
-		} else {
-			// ... update order status
-			Order order = ordersRepository.findById(Integer.parseInt(orderId)).orElseThrow();
-			order.setStatus(OrderStatus.CANCELLED);
-			ordersRepository.save(order);
-		}
+	// // ... update order status
+	// if (payload.equals("APPROVED")) {
+	// // ... update order status
+	// Order order =
+	// ordersRepository.findById(Integer.parseInt(orderId)).orElseThrow();
+	// order.setStatus(OrderStatus.APPROVED);
+	// ordersRepository.save(order);
+	// } else {
+	// // ... update order status
+	// Order order =
+	// ordersRepository.findById(Integer.parseInt(orderId)).orElseThrow();
+	// order.setStatus(OrderStatus.CANCELLED);
+	// ordersRepository.save(order);
+	// }
 
-	}
+	// }
 }
 
 @SpringBootApplication
